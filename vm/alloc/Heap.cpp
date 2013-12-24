@@ -236,6 +236,7 @@ static void *tryMalloc(size_t size)
      */
     ptr = dvmHeapSourceAllocAndGrow(size);
     if (ptr != NULL) {
+<<<<<<< HEAD
         size_t newHeapSize;
 
         newHeapSize = dvmHeapSourceGetIdealFootprint();
@@ -246,6 +247,8 @@ static void *tryMalloc(size_t size)
         LOGI_HEAP("Grow heap (frag case) to "
                 "%zu.%03zuMB for %zu-byte allocation",
                 FRACTIONAL_MB(newHeapSize), size);
+=======
+>>>>>>> f2c3a1ead... Removed excessive GC freed lines instead disable them
         return ptr;
     }
     /* Most allocations should have succeeded by now, so the heap
@@ -495,12 +498,8 @@ static void verifyRootsAndHeap()
 void dvmCollectGarbageInternal(const GcSpec* spec)
 {
     GcHeap *gcHeap = gDvm.gcHeap;
-    u4 gcEnd = 0;
-    u4 rootStart = 0 , rootEnd = 0;
-    u4 dirtyStart = 0, dirtyEnd = 0;
     size_t numObjectsFreed, numBytesFreed;
     size_t currAllocated, currFootprint;
-    size_t percentFree;
     int oldThreadPriority = INT_MAX;
 
     /* The heap lock must be held.
@@ -526,7 +525,6 @@ void dvmCollectGarbageInternal(const GcSpec* spec)
 
     gcHeap->gcRunning = true;
 
-    rootStart = dvmGetRelativeTimeMsec();
     ATRACE_BEGIN("GC: Threads Suspended"); // Suspend A
     dvmSuspendAllThreads(SUSPEND_FOR_GC);
 
@@ -576,7 +574,6 @@ void dvmCollectGarbageInternal(const GcSpec* spec)
         dvmUnlockHeap();
         dvmResumeAllThreads(SUSPEND_FOR_GC);
         ATRACE_END(); // Suspend A
-        rootEnd = dvmGetRelativeTimeMsec();
     }
 
     /* Recursively mark any objects that marked objects point to strongly.
@@ -591,7 +588,6 @@ void dvmCollectGarbageInternal(const GcSpec* spec)
          * Re-acquire the heap lock and perform the final thread
          * suspension.
          */
-        dirtyStart = dvmGetRelativeTimeMsec();
         dvmLockHeap();
         ATRACE_BEGIN("GC: Threads Suspended"); // Suspend B
         dvmSuspendAllThreads(SUSPEND_FOR_GC);
@@ -656,7 +652,6 @@ void dvmCollectGarbageInternal(const GcSpec* spec)
         dvmUnlockHeap();
         dvmResumeAllThreads(SUSPEND_FOR_GC);
         ATRACE_END(); // Suspend B
-        dirtyEnd = dvmGetRelativeTimeMsec();
     }
     dvmHeapSweepUnmarkedObjects(spec->isPartial, spec->isConcurrent,
                                 &numObjectsFreed, &numBytesFreed);
@@ -697,7 +692,6 @@ void dvmCollectGarbageInternal(const GcSpec* spec)
     if (!spec->isConcurrent) {
         dvmResumeAllThreads(SUSPEND_FOR_GC);
         ATRACE_END(); // Suspend A
-        dirtyEnd = dvmGetRelativeTimeMsec();
         /*
          * Restore the original thread scheduling priority if it was
          * changed at the start of the current garbage collection.
@@ -712,6 +706,7 @@ void dvmCollectGarbageInternal(const GcSpec* spec)
      */
     dvmEnqueueClearedReferences(&gDvm.gcHeap->clearedReferences);
 
+<<<<<<< HEAD
     gcEnd = dvmGetRelativeTimeMsec();
     percentFree = 100 - (size_t)(100.0f * (float)currAllocated / currFootprint);
     if (!spec->isConcurrent) {
@@ -740,6 +735,8 @@ void dvmCollectGarbageInternal(const GcSpec* spec)
              currAllocated / 1024, currFootprint / 1024,
              rootTime, dirtyTime, gcTime);
     }
+=======
+>>>>>>> f2c3a1ead... Removed excessive GC freed lines instead disable them
     if (gcHeap->ddmHpifWhen != 0) {
         LOGD_HEAP("Sending VM heap info to DDM");
         dvmDdmSendHeapInfo(gcHeap->ddmHpifWhen, false);
@@ -782,18 +779,12 @@ bool dvmWaitForConcurrentGcToComplete()
     bool waited = gDvm.gcHeap->gcRunning;
     Thread *self = dvmThreadSelf();
     assert(self != NULL);
-    u4 start = dvmGetRelativeTimeMsec();
     while (gDvm.gcHeap->gcRunning) {
         ThreadStatus oldStatus = dvmChangeStatus(self, THREAD_VMWAIT);
         dvmWaitCond(&gDvm.gcHeapCond, &gDvm.gcHeapLock);
         dvmChangeStatus(self, oldStatus);
     }
-    u4 end = dvmGetRelativeTimeMsec();
 
-    if (end - start > 0) {
-
-        ALOGD("WAIT_FOR_CONCURRENT_GC blocked %ums", end - start);
-    }
     ATRACE_END();
     return waited;
 }
