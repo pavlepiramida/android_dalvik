@@ -236,19 +236,7 @@ static void *tryMalloc(size_t size)
      */
     ptr = dvmHeapSourceAllocAndGrow(size);
     if (ptr != NULL) {
-<<<<<<< HEAD
-        size_t newHeapSize;
 
-        newHeapSize = dvmHeapSourceGetIdealFootprint();
-//TODO: may want to grow a little bit more so that the amount of free
-//      space is equal to the old free space + the utilization slop for
-//      the new allocation.
-
-        LOGI_HEAP("Grow heap (frag case) to "
-                "%zu.%03zuMB for %zu-byte allocation",
-                FRACTIONAL_MB(newHeapSize), size);
-=======
->>>>>>> f2c3a1ead... Removed excessive GC freed lines instead disable them
         return ptr;
     }
     /* Most allocations should have succeeded by now, so the heap
@@ -706,37 +694,7 @@ void dvmCollectGarbageInternal(const GcSpec* spec)
      */
     dvmEnqueueClearedReferences(&gDvm.gcHeap->clearedReferences);
 
-<<<<<<< HEAD
-    gcEnd = dvmGetRelativeTimeMsec();
-    percentFree = 100 - (size_t)(100.0f * (float)currAllocated / currFootprint);
-    if (!spec->isConcurrent) {
-        u4 markSweepTime = dirtyEnd - rootStart;
-        u4 gcTime = gcEnd - rootStart;
-        bool isSmall = numBytesFreed > 0 && numBytesFreed < 1024;
 
-        ALOGD("%s freed %s%zdK, %d%% free %zdK/%zdK, paused %ums, total %ums",
-             spec->reason,
-             isSmall ? "<" : "",
-             numBytesFreed ? MAX(numBytesFreed / 1024, 1) : 0,
-             percentFree,
-             currAllocated / 1024, currFootprint / 1024,
-             markSweepTime, gcTime);
-    } else {
-        u4 rootTime = rootEnd - rootStart;
-        u4 dirtyTime = dirtyEnd - dirtyStart;
-        u4 gcTime = gcEnd - rootStart;
-        bool isSmall = numBytesFreed > 0 && numBytesFreed < 1024;
-
-        ALOGD("%s freed %s%zdK, %d%% free %zdK/%zdK, paused %ums+%ums, total %ums",
-             spec->reason,
-             isSmall ? "<" : "",
-             numBytesFreed ? MAX(numBytesFreed / 1024, 1) : 0,
-             percentFree,
-             currAllocated / 1024, currFootprint / 1024,
-             rootTime, dirtyTime, gcTime);
-    }
-=======
->>>>>>> f2c3a1ead... Removed excessive GC freed lines instead disable them
     if (gcHeap->ddmHpifWhen != 0) {
         LOGD_HEAP("Sending VM heap info to DDM");
         dvmDdmSendHeapInfo(gcHeap->ddmHpifWhen, false);
